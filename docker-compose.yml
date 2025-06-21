@@ -1,0 +1,44 @@
+# Docker Compose pour AI Relay Server
+# Compatible avec Coolify deployment
+
+version: '3.8'
+
+services:
+  ai-relay-server:
+    build: .
+    container_name: ai-relay-server
+    restart: unless-stopped
+    ports:
+      - "4100:4100"
+    environment:
+      - NODE_ENV=production
+      - PORT=4100
+      # AI Endpoints - à adapter selon ton VPS
+      - CLAUDE_ENDPOINT=http://89.117.61.193:5050
+      - OLLAMA_ENDPOINT=http://89.117.61.193:4003
+      # Security
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-ai-relay-production}
+    volumes:
+      # Logs persistence (optionnel)
+      - ./logs:/app/logs
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      # Labels pour Coolify
+      - "coolify.managed=true"
+      - "coolify.version=1.0.0"
+      - "coolify.description=AI Relay Server for GitHub → Claude + Ollama"
+
+networks:
+  ai-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local
