@@ -6,7 +6,7 @@ services:
     container_name: ai-relay-server
     restart: unless-stopped
     ports:
-      - "4100:4100"
+      - "4200:4100"
     environment:
       - NODE_ENV=production
       - PORT=4100
