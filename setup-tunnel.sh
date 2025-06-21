@@ -11,7 +11,7 @@ echo "🚇 Configuration du tunnel SSH Mac → VPS"
 echo "📍 VPS: $VPS_IP"
 echo "🔧 Services à exposer:"
 echo "   - Claude (5050) → VPS:5050"
-echo "   - Ollama Endpoint (4003) → VPS:4004"
+echo "   - Ollama Endpoint (8090) → VPS:8091"
 
 # Test de connectivité VPS
 echo "🔐 Test connexion VPS..."
@@ -32,10 +32,10 @@ else
     echo "   Démarre ton endpoint Claude sur le port 5050"
 fi
 
-if curl -s http://localhost:4003/health > /dev/null 2>&1; then
-    echo "✅ Ollama Endpoint (4003) : Actif"
+if curl -s http://localhost:8090/health > /dev/null 2>&1; then
+    echo "✅ Ollama Endpoint (8090) : Actif"
 else
-    echo "⚠️  Ollama Endpoint (4003) : Non accessible"
+    echo "⚠️  Ollama Endpoint (8090) : Non accessible"
     echo "   Démarre avec: ./start-ai-services.sh"
 fi
 
@@ -47,7 +47,7 @@ echo ""
 # Créer le tunnel SSH avec reverse port forwarding
 ssh -i $SSH_KEY \
     -R *:5050:localhost:5050 \
-    -R *:4004:localhost:4003 \
+    -R *:8091:localhost:8090 \
     -N \
     -o ServerAliveInterval=30 \
     -o ServerAliveCountMax=3 \

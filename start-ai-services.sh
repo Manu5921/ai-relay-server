@@ -43,9 +43,9 @@ echo $! > logs/claude.pid
 sleep 2
 
 # 4. Démarrer Ollama endpoint
-echo "🔍 Vérification Ollama endpoint (port 4003)..."
-if check_port 4003; then
-    echo "⚠️  Port 4003 déjà utilisé, arrêt du processus..."
+echo "🔍 Vérification Ollama endpoint (port 8090)..."
+if check_port 8090; then
+    echo "⚠️  Port 8090 déjà utilisé, arrêt du processus..."
     pkill -f "ollama-endpoint.js"
     sleep 2
 fi
@@ -70,8 +70,8 @@ else
     echo "❌ Claude Endpoint non accessible"
 fi
 
-if curl -s http://localhost:4003/health > /dev/null; then
-    echo "✅ Ollama Endpoint (4003) : Actif"
+if curl -s http://localhost:8090/health > /dev/null; then
+    echo "✅ Ollama Endpoint (8090) : Actif"
 else
     echo "❌ Ollama Endpoint non accessible"
 fi
@@ -80,7 +80,7 @@ echo ""
 echo "📋 Services démarrés:"
 echo "   - Ollama API: http://localhost:11434"
 echo "   - Claude Endpoint: http://localhost:5050"
-echo "   - Ollama Endpoint: http://localhost:4003"
+echo "   - Ollama Endpoint: http://localhost:8090"
 echo ""
 echo "📁 Logs dans: ./logs/"
 echo "🛑 Pour arrêter: ./stop-ai-services.sh"
