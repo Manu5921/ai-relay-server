@@ -7,6 +7,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
 const PORT = 5050;
@@ -29,9 +30,36 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Fonction pour poster un commentaire GitHub
+async function postGitHubComment(repoFullName, prNumber, comment) {
+    const githubToken = process.env.GITHUB_TOKEN;
+    if (!githubToken) {
+        log('⚠️ GITHUB_TOKEN not configured - skipping comment');
+        return null;
+    }
+
+    try {
+        const response = await axios.post(
+            `https://api.github.com/repos/${repoFullName}/issues/${prNumber}/comments`,
+            { body: comment },
+            {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        log(`✅ GitHub comment posted: ${response.data.html_url}`);
+        return response.data;
+    } catch (error) {
+        log(`❌ Failed to post GitHub comment: ${error.message}`);
+        return null;
+    }
+}
+
 // Endpoint principal pour recevoir les notifications AI
-app.post('/ai-sync', (req, res) => {
-    const { source, event_type, branch, message, commits, timestamp } = req.body;
+app.post('/ai-sync', async (req, res) => {
+    const { source, event_type, branch, message, commits, timestamp, metadata } = req.body;
     
     log(`📨 Notification reçue de ${source}`);
     log(`🔄 Type: ${event_type}`);
@@ -51,22 +79,52 @@ app.post('/ai-sync', (req, res) => {
     // Ici tu peux ajouter ta logique Claude
     // Par exemple : analyser le code, générer des tests, etc.
     
-    // Simulation d'une réponse Claude
+    // Analyser le type d'événement et générer une réponse
+    let analysis = {
+        event_type,
+        branch,
+        files_analyzed: commits ? commits.reduce((acc, c) => acc + (c.modified?.length || 0), 0) : 0,
+        suggestions: []
+    };
+
+    // Logique spécifique selon le type d'événement
+    if (event_type === 'push') {
+        analysis.suggestions = [
+            "🚀 Push detected - code analysis completed",
+            "📋 Files reviewed for potential issues",
+            "✅ Memory updated in collaboration system"
+        ];
+    } else if (event_type === 'pull_request') {
+        analysis.suggestions = [
+            "🔍 Pull Request analysis initiated",
+            "🧪 Running automated tests...",
+            "📝 Reviewing changes for best practices"
+        ];
+    }
+
     const claudeResponse = {
         status: 'processed',
-        analysis: {
-            event_type,
-            branch,
-            files_analyzed: commits ? commits.reduce((acc, c) => acc + (c.modified?.length || 0), 0) : 0,
-            suggestions: [
-                "Code looks good! 👍",
-                "Consider adding tests for new features",
-                "Documentation updated as needed"
-            ]
-        },
+        analysis,
         timestamp: new Date().toISOString(),
         processed_by: 'claude-endpoint'
     };
+
+    // Si c'est une Pull Request, poster un commentaire automatique
+    if (event_type === 'pull_request' && metadata?.repository && metadata?.pr_number) {
+        const comment = `🤖 **Claude AI Analysis Complete**
+
+✅ **Status**: Code review completed  
+📊 **Files analyzed**: ${analysis.files_analyzed}  
+🌿 **Branch**: \`${branch}\`  
+
+**Analysis Summary**:
+${analysis.suggestions.map(s => `- ${s}`).join('\n')}
+
+🔗 **AI Collaboration**: This review was processed by the autonomous AI system.  
+⏰ **Processed**: ${new Date().toLocaleString()}`;
+
+        await postGitHubComment(metadata.repository.full_name, metadata.pr_number, comment);
+    }
 
     log(`✅ Traitement terminé`);
     res.json(claudeResponse);

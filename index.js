@@ -135,7 +135,9 @@ function parseGitHubPayload(body, headers) {
         body: body.pull_request?.body,
         branch: body.pull_request?.head?.ref,
         repository: body.repository?.name,
+        message: body.pull_request?.title || '',
         author: body.pull_request?.user?.login,
+        commits: [], // PRs don't have commits in the payload
         timestamp: new Date().toISOString()
       }
     }
@@ -171,8 +173,13 @@ async function notifyClaude(payload) {
       commits: payload.commits,
       timestamp: payload.timestamp,
       metadata: {
-        repository: payload.repository,
-        author: payload.author
+        repository: { 
+          name: payload.repository,
+          full_name: `Manu5921/${payload.repository}` // Hardcoded for now
+        },
+        author: payload.author,
+        pr_number: payload.pr_number,
+        action: payload.action
       }
     }
 
