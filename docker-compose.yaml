@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  ai-relay-server:
+    build: .
+    container_name: ai-relay-server
+    restart: unless-stopped
+    ports:
+      - "4100:4100"
+    environment:
+      - NODE_ENV=production
+      - PORT=4100
+      - CLAUDE_ENDPOINT=http://host.docker.internal:5050
+      - OLLAMA_ENDPOINT=http://host.docker.internal:4003
+      - GITHUB_WEBHOOK_SECRET=ai-relay-production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  ai-network:
+    driver: bridge
