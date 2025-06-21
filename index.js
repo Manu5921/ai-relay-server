@@ -74,7 +74,18 @@ app.post('/github-webhook', async (req, res) => {
 
     log('info', '✅ Payload parsed', payload)
 
-    // Parallel notification to Claude and Ollama
+    // Handle ping events differently (no AI notification needed)
+    if (payload.type === 'ping') {
+      log('info', '🏓 GitHub ping received', { zen: payload.zen })
+      return res.json({
+        status: 'pong',
+        message: 'Webhook active and healthy',
+        zen: payload.zen,
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    // Parallel notification to Claude and Ollama for actual events
     const [claudeResult, ollamaResult] = await Promise.allSettled([
       notifyClaude(payload),
       notifyOllama(payload)
@@ -111,6 +122,19 @@ function parseGitHubPayload(body, headers) {
   try {
     // Handle different GitHub event types
     const eventType = headers['x-github-event']
+    
+    // GitHub ping event (webhook test)
+    if (eventType === 'ping') {
+      return {
+        type: 'ping',
+        from: 'github',
+        message: 'Webhook connection test',
+        repository: body.repository?.name,
+        hook_id: body.hook_id,
+        zen: body.zen,
+        timestamp: new Date().toISOString()
+      }
+    }
     
     if (eventType === 'push') {
       return {
