@@ -110,21 +110,28 @@ export default function VectorDashboard() {
 
   const fetchStats = async () => {
     try {
+      console.log('🔄 Fetching stats...')
       setLoading(true)
       const response = await fetch('/api/vector/stats')
+      console.log('📡 Response status:', response.status)
       const result = await response.json()
+      console.log('📊 Stats result:', result)
       
       if (result.success) {
         setStats(result.data)
         setError(null)
+        console.log('✅ Stats loaded successfully')
       } else {
         setError(result.error || 'Erreur inconnue')
+        console.error('❌ Stats error:', result.error)
       }
     } catch (err: any) {
+      console.error('💥 Fetch error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
       setLastRefresh(new Date())
+      console.log('🏁 fetchStats finished, loading=false')
     }
   }
 
@@ -674,11 +681,11 @@ export default function VectorDashboard() {
         </div>
       </div>
       
-      {/* Chat Interface avec API Gemini */}
-      <ChatInterface 
+      {/* Chat Interface avec API Gemini - Temporarily disabled for debugging */}
+      {/* <ChatInterface 
         currentPage="dashboard" 
         contextData={{ stats, healthStatus, similarityData }} 
-      />
+      /> */}
     </div>
   )
 }
